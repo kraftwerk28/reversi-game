@@ -1,0 +1,12 @@
+{
+  "version": 3,
+  "file": "bundle.css",
+  "sources": [
+    "Fishka.svelte"
+  ],
+  "sourcesContent": [
+    "<script>\n\texport let color = 'black';\n\tconst trDur = 300;\n\t$: swapTrn = (node, { cl }) => ({\n\t\tdelay: cl === color ? trDur : 0,\n\t\tduration: trDur,\n\t\tcss: (t, u) => `\n\t\t\ttransform: rotateX(${t * 0.5}turn) scale(${(t >= 0.5 ? u : t) * 2 + 1});\n\t\t\tvisibility: ${t >= 0.5 ? 'visible' : 'hidden'};\n\t\t`,\n\t});\n</script>\n<style>\n\t.root {\n\t\tdisplay: block;\n\t\tposition: relative;\n\t\twidth: 2em;\n\t\theight: 2em;\n\t\tmargin: 20px;\n\t}\n\t.fishka {\n\t\twidth: 2em;\n\t\theight: 2em;\n\t\tposition: absolute;\n\t\tborder-radius: 1em;\n\t\tcursor: pointer;\n\t}\n\t.w {\n\t\tbackground: white;\n\t\tborder: 1px solid black;\n\t}\n\t.b {\n\t\tbackground: black;\n\t\tborder: 1px solid white;\n\t}\n</style>\n\n<div class=\"root\">\n\t{#if color === 'black'}\n\t\t<div class=\"fishka b\" transition:swapTrn />\n\t{/if}\n\n\t{#if color === 'white'}\n\t\t<div class=\"fishka w\" transition:swapTrn />\n\t{/if}\n</div>"
+  ],
+  "names": [],
+  "mappings": "AAaC,KAAK,cAAC,CAAC,AACN,OAAO,CAAE,KAAK,CACd,QAAQ,CAAE,QAAQ,CAClB,KAAK,CAAE,GAAG,CACV,MAAM,CAAE,GAAG,CACX,MAAM,CAAE,IAAI,AACb,CAAC,AACD,OAAO,cAAC,CAAC,AACR,KAAK,CAAE,GAAG,CACV,MAAM,CAAE,GAAG,CACX,QAAQ,CAAE,QAAQ,CAClB,aAAa,CAAE,GAAG,CAClB,MAAM,CAAE,OAAO,AAChB,CAAC,AACD,EAAE,cAAC,CAAC,AACH,UAAU,CAAE,KAAK,CACjB,MAAM,CAAE,GAAG,CAAC,KAAK,CAAC,KAAK,AACxB,CAAC,AACD,EAAE,cAAC,CAAC,AACH,UAAU,CAAE,KAAK,CACjB,MAAM,CAAE,GAAG,CAAC,KAAK,CAAC,KAAK,AACxB,CAAC"
+}
