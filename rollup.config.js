@@ -41,7 +41,7 @@ export default {
       dev: !production,
       css: css => {
         css.write('bundle.css');
-      }
+      },
     }),
     resolve({
       browser: true,
