@@ -26,7 +26,13 @@
     state.move = state.move === STATE.BLACK ? STATE.WHITE : STATE.BLACK;
     state.board = state.board.slice();
 
-    if (getPossibleMoves(state).size === 0) {choseWinner(state.board)};
+    if (getPossibleMoves(state).size === 0 && state.pass) {
+      choseWinner(state.board);
+    } else if (getPossibleMoves(state).size === 0 && !state.pass) {
+      alert("Pass");
+      state.move = state.move === STATE.BLACK ? STATE.WHITE : STATE.BLACK;
+      state.pass = true;
+    };
   }
 
   let fieldNode;

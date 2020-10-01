@@ -24,7 +24,7 @@ const directions = [
 ];
 
 export function getPossibleMoves(gameState) {
-  const { board, move } = gameState;
+  const { move, board, pass } = gameState;
   const allowedMoves = new Map();
   let otherColor = move === STATE.BLACK ? STATE.WHITE : STATE.BLACK;
   board
@@ -65,7 +65,7 @@ export function initGame() {
   const f = Array(64).fill(0);
   f[xy2i(3, 3)] = f[xy2i(4, 4)] = 2;
   f[xy2i(4, 3)] = f[xy2i(3, 4)] = 1;
-  return { move: STATE.BLACK, board: f };
+  return { move: STATE.BLACK, board: f, pass: false };
 }
 
 export const STATE = {
@@ -95,13 +95,3 @@ export function choseWinner(board) {
   }
   alert(`Black: ${black}\nWhite: ${white}\n${result}`);
 }
-
-// export function pass(gameState) {
-//   const { board, move } = gameState;
-//   // let previousPass = false;
-//   if (getPossibleMoves(state).size === 0) {
-//     move = move === STATE.BLACK ? STATE.WHITE : STATE.BLACK;
-//   }
-//
-//   return
-// }
