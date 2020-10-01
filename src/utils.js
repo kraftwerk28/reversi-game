@@ -72,3 +72,36 @@ export const STATE = {
   NONE: 0, BLACK: 1, WHITE: 2,
   BLACK_WON: 3, WHITE_WON: 4, TIE: 5,
 };
+
+export function countDiscs(board) {
+  let black = 0;
+  let white = 0;
+  for (let i = 0; i < board.length; i++) {
+    if (board[i] === 1) black++;
+    if (board[i] === 2) white++;
+  }
+  return { black, white };
+}
+
+export function choseWinner(board) {
+  const { black, white } = countDiscs(board);
+  let result = '';
+  if (black > white) {
+    result = 'Mr Black won';
+  } else if (black < white) {
+    result = 'Mr White won';
+  } else {
+    result = 'Tie, friendship won';
+  }
+  alert(`Black: ${black}\nWhite: ${white}\n${result}`);
+}
+
+// export function pass(gameState) {
+//   const { board, move } = gameState;
+//   // let previousPass = false;
+//   if (getPossibleMoves(state).size === 0) {
+//     move = move === STATE.BLACK ? STATE.WHITE : STATE.BLACK;
+//   }
+//
+//   return
+// }

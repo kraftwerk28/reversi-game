@@ -3,6 +3,7 @@
   import {
     initGame,
     getPossibleMoves,
+    choseWinner,
     STATE,
     xy2i,
     ALLOW_BORDER,
@@ -24,6 +25,8 @@
 
     state.move = state.move === STATE.BLACK ? STATE.WHITE : STATE.BLACK;
     state.board = state.board.slice();
+
+    if (getPossibleMoves(state).size === 0) {choseWinner(state.board)};
   }
 
   let fieldNode;
