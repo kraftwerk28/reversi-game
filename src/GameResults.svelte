@@ -1,5 +1,5 @@
 <script>
-  import { STATE, initGame } from './utils';
+  import { STATE } from './utils';
   export let gameState;
   export let onGameRestart;
   $: isGameEnded = [STATE.TIE, STATE.BLACK_WON, STATE.WHITE_WON].includes(
@@ -8,7 +8,7 @@
   let winText;
   $: {
     if (gameState.move === STATE.TIE) {
-      winText = 'Tie!';
+      winText = '🤷Tie!';
     } else {
       const face = gameState.move === STATE.WHITE_WON ? '🌝' : '🌚';
       winText = `${face} won!`;
