@@ -13,9 +13,6 @@ export const swapTrn = (_, { duration = 300 }) => ({
   },
 });
 
-export const ALLOW_BORDER = '3px solid rgba(0 255 0 / 0.8)';
-export const DENY_BORDER = '3px solid rgba(255 0 0 / 0.8)';
-
 export const i2xy = (i) => [i % 8, (i / 8) | 0];
 export const xy2i = (x, y) => y * 8 + x;
 const directions = [
@@ -62,9 +59,9 @@ export function getPossibleMoves(gameState) {
 }
 
 export function initGame() {
-  const f = Array(64).fill(0);
-  f[xy2i(3, 3)] = f[xy2i(4, 4)] = 2;
-  f[xy2i(4, 3)] = f[xy2i(3, 4)] = 1;
+  const f = Array(64).fill(STATE.NONE);
+  f[xy2i(3, 3)] = f[xy2i(4, 4)] = STATE.WHITE;
+  f[xy2i(4, 3)] = f[xy2i(3, 4)] = STATE.BLACK;
   return { move: STATE.BLACK, board: f, pass: false };
 }
 
@@ -77,8 +74,8 @@ export function countDiscs(board) {
   let black = 0;
   let white = 0;
   for (let i = 0; i < board.length; i++) {
-    if (board[i] === 1) black++;
-    if (board[i] === 2) white++;
+    if (board[i] === STATE.BLACK) black++;
+    if (board[i] === STATE.WHITE) white++;
   }
   return { black, white };
 }

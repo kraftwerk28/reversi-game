@@ -1,79 +1,75 @@
 <script>
   import Disc from './Disc.svelte';
-  import {
-    initGame,
-    getPossibleMoves,
-    choseWinner,
-    STATE,
-    xy2i,
-    ALLOW_BORDER,
-    DENY_BORDER,
-  } from './utils';
+  import GameResults from './GameResults.svelte';
+  import Marker, { onMouseMove, onMouseLeave } from './Marker.svelte';
+  import { initGame, getPossibleMoves, choseWinner, STATE } from './utils';
 
-  let state = initGame();
-  $: possibleMoves = getPossibleMoves(state);
+  let gameState = initGame();
+  $: possibleMoves = getPossibleMoves(gameState);
+
+  function switchMove() {
+    gameState.move = gameState.move === STATE.BLACK ? STATE.WHITE : STATE.BLACK;
+  }
 
   function setDisc(i) {
     const rowToFlip = possibleMoves.get(i);
-    if (!rowToFlip) {
+    if (!rowToFlip) return;
+    gameState.board[i] = gameState.move;
+    for (const i of rowToFlip) {
+      gameState.board[i] = gameState.move;
+    }
+    gameState.board = gameState.board.slice();
+    switchMove();
+    possibleMoves = getPossibleMoves(gameState);
+    checkWinner();
+  }
+
+  function checkWinner() {
+    if (gameState.board.every((c) => c !== STATE.NONE)) {
+      // Board is full
+      const nBlack = gameState.board.reduce(
+        (acc, c) => acc + (c === STATE.BLACK ? 1 : 0),
+        0
+      );
+      if (nBlack > 32) {
+        gameState.move = STATE.BLACK_WON;
+      } else {
+        gameState.move = STATE.WHITE_WON;
+      }
       return;
     }
-    state.board[i] = state.move;
-    for (const i of rowToFlip) {
-      state.board[i] = state.move;
+
+    if (possibleMoves.size === 0) {
+      if (gameState.pass) {
+        gameState.move = STATE.TIE;
+      } else {
+        switchMove();
+        gameState.pass = true;
+      }
     }
+  }
 
-    state.move = state.move === STATE.BLACK ? STATE.WHITE : STATE.BLACK;
-    state.board = state.board.slice();
-
-    if (getPossibleMoves(state).size === 0 && state.pass) {
-      choseWinner(state.board);
-    } else if (getPossibleMoves(state).size === 0 && !state.pass) {
-      alert("Pass");
-      state.move = state.move === STATE.BLACK ? STATE.WHITE : STATE.BLACK;
-      state.pass = true;
-    };
+  function onGameRestart() {
+    gameState = initGame();
   }
 
   let fieldNode;
-  $: fieldBounds = fieldNode?.getBoundingClientRect();
-  const markerState = { color: 0 };
-  let markerStyle = '';
-  $: iswhite = state.move === STATE.WHITE;
-  $: {
-    if (fieldBounds) {
-      const { x, y, color } = markerState;
-      markerStyle = `
-        left: ${(x / 8) * (fieldBounds.width - 14) + x * 2}px;
-        top: ${(y / 8) * (fieldBounds.height - 14) + y * 2}px;
-        border: ${
-          color === 0 ? 'transparent' : color === 1 ? DENY_BORDER : ALLOW_BORDER
-        };
-      `;
-    }
+  let fieldBounds;
+  function setBounds() {
+    fieldBounds = fieldNode?.getBoundingClientRect();
   }
 
-  function onMouseMove(evt) {
-    const { left, top, width, height } = fieldBounds;
-    const { clientX, clientY } = evt;
-    const [x, y] = [
-      (((clientX - left) / width) * 8) | 0,
-      (((clientY - top) / height) * 8) | 0,
-    ];
-    markerState.color = possibleMoves.has(xy2i(x, y)) ? 2 : 1;
-    if (x === markerState.x && y === markerState.y) {
-      return;
-    }
-    markerState.x = x;
-    markerState.y = y;
-  }
-  function onMouseLeave() {
-    markerState.color = 0;
-  }
+  $: setBounds(), fieldNode;
+  $: iswhite = gameState.move === STATE.WHITE;
+  $: remainingDiscs = 64 - gameState.board.filter((c) => c > 0).length;
+  $: isGameEnded = [STATE.TIE, STATE.BLACK_WON, STATE.WHITE_WON].includes(
+    gameState.move
+  );
 </script>
 
 <style>
   .field-container {
+    position: relative;
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -84,24 +80,22 @@
     grid-template-columns: repeat(8, auto);
     justify-content: center;
     grid-gap: 2px;
-  }
-  .marker {
-    width: 3em;
-    height: 3em;
-    position: absolute;
-    box-sizing: border-box;
-    transition: left 0.2s, top 0.2s, border-color 0.2s;
-    pointer-events: none;
-  }
-  .iswhite {
-    transform: scaleX(-1);
+    transition: filter 2s;
   }
   .game-status span {
     transition: transform 0.2s;
     font-size: 3em;
     display: inline-block;
   }
+  .iswhite {
+    transform: scaleX(-1);
+  }
+  .blurred {
+    filter: blur(8px);
+  }
 </style>
+
+<svelte:window on:resize={setBounds} />
 
 <div class="field-container">
   <div class="game-status">
@@ -110,16 +104,18 @@
     <span>&#x1F31D</span>
     <span>&nbsp;</span>
     <span>&#x26AA</span>
-    <span>x{64 - state.board.filter((c) => c > 0).length}</span>
+    <span>x{remainingDiscs}</span>
   </div>
   <div
     class="field-root"
+    class:blurred={isGameEnded}
     bind:this={fieldNode}
-    on:mousemove={onMouseMove}
+    on:mousemove={(e) => onMouseMove(e, fieldBounds)}
     on:mouseleave={onMouseLeave}>
-    {#each state.board as item, i}
+    {#each gameState.board as item, i}
       <Disc on:click={() => setDisc(i)} color={item} />
     {/each}
-    <div class="marker" style={markerStyle} />
+    <Marker {fieldBounds} {possibleMoves} />
   </div>
+  <GameResults {gameState} {onGameRestart} />
 </div>
