@@ -23,13 +23,13 @@
 </script>
 
 <script>
-  import { xy2i } from './utils';
+  import { xy2i } from '../common/utils';
+  import { gameState } from './game';
 
-  export let possibleMoves;
   export let fieldBounds;
 
   let markerStyle = '';
-  $: allow = possibleMoves.has(xy2i($markerState.x, $markerState.y));
+  $: allow = $gameState.possibleMoves.has(xy2i($markerState.x, $markerState.y));
 
   $: {
     if (fieldBounds) {

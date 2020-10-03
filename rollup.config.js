@@ -1,56 +1,70 @@
+import { builtinModules } from 'module';
+import pkg from './package.json';
+import cp from 'child_process';
+
 import svelte from 'rollup-plugin-svelte';
 import resolve from '@rollup/plugin-node-resolve';
 import commonjs from '@rollup/plugin-commonjs';
 import livereload from 'rollup-plugin-livereload';
 import { terser } from 'rollup-plugin-terser';
+import copy from 'rollup-plugin-copy';
 
-const production = !process.env.ROLLUP_WATCH;
+const dev = process.env.NODE_ENV === 'development';
 
-function serve() {
-  let server;
+const serverArgs = [];
 
-  function toExit() {
-    if (server) server.kill(0);
-  }
-
+function runServer() {
+  let proc;
   return {
     writeBundle() {
-      if (server) return;
-      server = require('child_process').spawn(
-        'npm',
-        ['run', 'serve', '--', '--dev'],
-        { stdio: ['ignore', 'inherit', 'inherit'], shell: true },
+      if (proc) {
+        proc.kill('SIGTERM');
+      }
+      proc = cp.spawn(
+        'node',
+        ['--enable-source-maps', 'server.js', ...serverArgs],
+        { stdio: ['ignore', 'inherit', 'inherit'], shell: true, }
       );
-
-      process.on('SIGTERM', toExit);
-      process.on('exit', toExit);
-    }
+    },
   };
 }
 
-export default {
-  input: 'src/main.js',
+const app = {
+  input: 'app/main.js',
   output: {
-    sourcemap: true,
+    sourcemap: dev,
     format: 'iife',
     name: 'app',
-    file: 'public/build/bundle.js'
+    file: 'public/build/bundle.js',
   },
   plugins: [
     svelte({
-      dev: !production,
-      css: css => {
+      dev,
+      css: (css) => {
         css.write('bundle.css');
       },
     }),
-    resolve({
-      browser: true,
-      dedupe: ['svelte']
-    }),
+    resolve({ browser: true, dedupe: ['svelte'] }),
     commonjs(),
-    !production && serve(),
-    !production && livereload('public'),
-    production && terser()
+    dev && livereload('public'),
+    !dev && terser(),
+    copy({
+      targets: [{ src: 'app/public/*', dest: 'public/' }],
+    }),
   ],
   watch: { clearScreen: false },
 };
+
+const server = {
+  input: 'server/index.js',
+  output: { sourcemap: dev, file: 'server.js', format: 'cjs' },
+  plugins: [dev && runServer()],
+  external: builtinModules.concat(Object.keys(pkg.dependencies)),
+  watch: { clearScreen: false },
+};
+
+const config = [server];
+if (process.env.SVELTE_APP) {
+  config.push(app);
+}
+export default config;

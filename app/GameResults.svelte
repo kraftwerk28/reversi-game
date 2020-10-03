@@ -1,16 +1,17 @@
 <script>
-  import { STATE } from './utils';
-  export let gameState;
-  export let onGameRestart;
+  import { STATE } from '../common/utils';
+  import { gameState } from './game';
+  import { restartGame } from './controllers';
+
   $: isGameEnded = [STATE.TIE, STATE.BLACK_WON, STATE.WHITE_WON].includes(
-    gameState.move
+    $gameState.move
   );
   let winText;
   $: {
-    if (gameState.move === STATE.TIE) {
+    if ($gameState.move === STATE.TIE) {
       winText = '🤷Tie!';
     } else {
-      const face = gameState.move === STATE.WHITE_WON ? '🌝' : '🌚';
+      const face = $gameState.move === STATE.WHITE_WON ? '🌝' : '🌚';
       winText = `${face} won!`;
     }
   }
@@ -36,7 +37,7 @@
 </style>
 
 {#if isGameEnded}
-  <div class="root" on:click={onGameRestart}>
+  <div class="root" on:click={restartGame}>
     <h1>{winText}</h1>
   </div>
 {/if}

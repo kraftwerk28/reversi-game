@@ -1,5 +1,16 @@
 <script>
-  import { swapTrn, STATE } from './utils';
+  import { STATE } from '../common/utils';
+  // Disc flip animation
+  export const swapTrn = (_, { duration = 300 }) => ({
+    duration,
+    css: (t, u) => {
+      return `
+      transform: rotateX(${t * 0.5}turn)
+                 scale(${(t >= 0.5 ? u : t) * 2 + 1});
+      visibility: ${t >= 0.5 ? 'visible' : 'hidden'};
+    `;
+    },
+  });
 
   export let color;
 </script>
@@ -39,4 +50,3 @@
     <div class="disc w" transition:swapTrn />
   {/if}
 </div>
-
