@@ -1,6 +1,6 @@
 import { builtinModules } from 'module';
-import pkg from './package.json';
 import cp from 'child_process';
+import pkg from './package.json';
 
 import svelte from 'rollup-plugin-svelte';
 import resolve from '@rollup/plugin-node-resolve';
@@ -22,7 +22,7 @@ function runServer() {
       }
       proc = cp.spawn(
         'node',
-        ['--enable-source-maps', 'server.js', ...serverArgs],
+        ['--enable-source-maps', './', ...serverArgs],
         { stdio: ['ignore', 'inherit', 'inherit'], shell: true, }
       );
     },
@@ -57,7 +57,7 @@ const app = {
 
 const server = {
   input: 'server/index.js',
-  output: { sourcemap: dev, file: 'server.js', format: 'cjs' },
+  output: { sourcemap: dev, file: 'index.js', format: 'cjs' },
   plugins: [dev && runServer()],
   external: builtinModules.concat(Object.keys(pkg.dependencies)),
   watch: { clearScreen: false },

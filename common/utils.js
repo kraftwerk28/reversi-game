@@ -3,15 +3,34 @@ export const STATE = {
   BLACK_WON: 3, WHITE_WON: 4, TIE: 5,
 };
 
-export const MESSAGE_TYPE = {
+export const MSG_TYPE = {
   COORD: 1,
   COLOR: 2,
 };
 
-export const CHANNEL_TYPE = { CMD: 0, WS: 1 };
+export const CHAN_TYPE = { CMD: 0, WS: 1 };
 
+// Coordinate conversion
+const ALPHABET = 'ABCDEFGH';
 export const i2xy = (i) => [i % 8, (i / 8) | 0];
 export const xy2i = (x, y) => y * 8 + x;
+export const xy2ab = (x, y) => ALPHABET[x] + (y + 1).toString();
+export const i2ab = (i) => xy2ab(i % 8, (i / 8) | 0);
+export const ab2xy = (ab) => [
+  ALPHABET.indexOf(ab[0].toUpperCase()),
+  parseInt(ab[1]),
+];
+export const ab2i = (ab) => xy2i(
+  ALPHABET.indexOf(ab[0].toUpperCase()),
+  parseInt(ab[1]),
+);
+export const isValidAB = (ab) =>
+  typeof ab === 'string' &&
+  ab.length === 2 &&
+  ALPHABET.includes(ab[0].toUpperCase()) &&
+  !isNaN(parseInt(ab[1]));
+
+// Possible moves check algorithm
 const directions = [
   [1, 0], [1, 1], [0, 1], [-1, 1],
   [-1, 0], [-1, -1], [0, -1], [1, -1],
@@ -85,9 +104,4 @@ export function choseWinner(board) {
     result = 'Tie, friendship won';
   }
   alert(`Black: ${black}\nWhite: ${white}\n${result}`);
-}
-
-export function deserializeMsg(type, raw) {
-  if (type === CHANNEL_TYPE.CMD) {
-  }
 }

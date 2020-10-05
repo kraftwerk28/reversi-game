@@ -6,10 +6,10 @@ import path from 'path';
 import yargs from 'yargs';
 
 import { MsgChan } from './message';
+import { parseArgs } from './args';
 
 async function main() {
-  const { argv } = yargs.array('bot');
-  console.log(argv);
+  console.log(parseArgs());
   // TODO: Run bots or websockets in respect to args.
 
   const app = fastify();
