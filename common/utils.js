@@ -1,17 +1,13 @@
-export const STATE = {
-  NONE: 0, BLACK: 1, WHITE: 2,
-  BLACK_WON: 3, WHITE_WON: 4, TIE: 5,
-};
-
-export const MSG_TYPE = {
-  COORD: 1,
-  COLOR: 2,
-};
-
-export const CHAN_TYPE = { CMD: 0, WS: 1 };
+import { STATE, COLORS } from './constants';
+// Validators
+export const isValidAB = (ab) =>
+  typeof ab === 'string' &&
+  ab.length === 2 &&
+  ALPHABET.includes(ab[0].toUpperCase()) &&
+  !isNaN(parseInt(ab[1]));
+export const isValidColor = (color) => COLORS.includes(color.toLowerCase());
 
 // Coordinate conversion
-const ALPHABET = 'ABCDEFGH';
 export const i2xy = (i) => [i % 8, (i / 8) | 0];
 export const xy2i = (x, y) => y * 8 + x;
 export const xy2ab = (x, y) => ALPHABET[x] + (y + 1).toString();
@@ -24,11 +20,6 @@ export const ab2i = (ab) => xy2i(
   ALPHABET.indexOf(ab[0].toUpperCase()),
   parseInt(ab[1]),
 );
-export const isValidAB = (ab) =>
-  typeof ab === 'string' &&
-  ab.length === 2 &&
-  ALPHABET.includes(ab[0].toUpperCase()) &&
-  !isNaN(parseInt(ab[1]));
 
 // Possible moves check algorithm
 const directions = [

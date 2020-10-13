@@ -11,7 +11,7 @@ import copy from 'rollup-plugin-copy';
 
 const dev = process.env.NODE_ENV === 'development';
 
-const serverArgs = [];
+const serverArgs = ['--bot', 'botcmd1'];
 
 function runServer() {
   let proc;
@@ -22,7 +22,7 @@ function runServer() {
       }
       proc = cp.spawn(
         'node',
-        ['--enable-source-maps', './', ...serverArgs],
+        ['--enable-source-maps', './', '--', ...serverArgs],
         { stdio: ['ignore', 'inherit', 'inherit'], shell: true, }
       );
     },
