@@ -1,5 +1,13 @@
 import { gameState } from './game';
-import { STATE, getPossibleMoves, initGame } from '../common/utils';
+import {
+  STATE,
+  MSG_TYPE,
+  getPossibleMoves,
+  initGame,
+  i2xy,
+  xy2i,
+} from '../common';
+import { connect } from './ws';
 
 function switchMove(state) {
   return state.move === STATE.BLACK ? STATE.WHITE : STATE.BLACK
@@ -41,7 +49,9 @@ function checkWinner() {
 export function setDisc(i) {
   gameState.update(s => {
     const rowToFlip = s.possibleMoves.get(i);
-    if (!rowToFlip) return s;
+    if (!rowToFlip) {
+      return s;
+    }
     const board = s.board.slice();
     board[i] = s.move;
     for (const i of rowToFlip) {
@@ -55,6 +65,30 @@ export function setDisc(i) {
   checkWinner();
 }
 
+export function sendMove(i) {
+  connect().then((ws) => {
+    const [x, y] = i2xy(i);
+    ws.send(MSG_TYPE.COORD, { x, y });
+  });
+}
+
 export function restartGame() {
   gameState.set(initGame());
+}
+
+export function setMyColor(color) {
+  gameState.update((state) => ({ ...state, playerColor: color }));
+}
+
+export function processMessage({ type, payload }) {
+  switch (type) {
+    case MSG_TYPE.COORD:
+      const i = xy2i(payload.x, payload.y);
+      setDisc(i);
+      break;
+    case MSG_TYPE.COLOR:
+      setMyColor(payload);
+    default:
+      break;
+  }
 }

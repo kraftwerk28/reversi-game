@@ -1,5 +1,5 @@
 <script>
-  import { STATE } from '../common/utils';
+  import { STATE } from '../common';
   import { gameState } from './game';
   import { restartGame } from './controllers';
 

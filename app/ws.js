@@ -1,12 +1,19 @@
 import { MSG_TYPE } from '../common';
 
-const WS_URL = 'ws://localhost:8080';
+const WS_URL = 'ws://127.0.0.1:8080';
 
 class WS {
   constructor() {
     const ws = new WebSocket(WS_URL);
+    this._waitConnectedQueue = [];
+    this._connected = false;
+
     ws.addEventListener('message', (ev) => {
       this._acceptMessage(ev.data);
+    });
+    ws.addEventListener('open', () => {
+      this._waitConnectedQueue.forEach(resolve => resolve());
+      this._connected = true;
     });
     this._ws = ws;
     this._awaitMessageQueue = [];
@@ -15,7 +22,7 @@ class WS {
   recv() {
     return new Promise((resolve) => {
       this._awaitMessageQueue.push(resolve);
-    })
+    });
   }
 
   send(type, payload) {
@@ -33,10 +40,10 @@ class WS {
   _decode(raw) {
     try {
       const [type, payload] = JSON.parse(raw);
-      if (!(type in MSG_TYPE)) {
-        throw new Error();
+      if (Object.values(MSG_TYPE).includes(type)) {
+        return { type, payload };
       }
-      return { type, payload };
+      throw new Error;
     } catch {
       return { type: MSG_TYPE.ERR };
     }
@@ -45,12 +52,23 @@ class WS {
   _encode(type, payload) {
     return JSON.stringify([type, payload]);
   }
+
+  waitConnected() {
+    if (this._connected) {
+      return Promise.resolve();
+    }
+    return new Promise((resolve) => {
+      this._waitConnectedQueue.push(resolve);
+    });
+  }
 }
 
-export function onPlaceDisc(callback) {
-  onPlaceDiscCallback = callback;
-}
+let wsInstance;
 
-export function connect() {
-  return new WS();
+export async function connect() {
+  if (!wsInstance) {
+    wsInstance = new WS();
+    await wsInstance.waitConnected();
+  }
+  return wsInstance;
 }

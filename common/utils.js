@@ -1,11 +1,11 @@
-import { STATE, COLORS } from './constants';
+import { STATE, COLOR } from './constants';
 // Validators
 export const isValidAB = (ab) =>
   typeof ab === 'string' &&
   ab.length === 2 &&
   ALPHABET.includes(ab[0].toUpperCase()) &&
   !isNaN(parseInt(ab[1]));
-export const isValidColor = (color) => COLORS.includes(color.toLowerCase());
+export const isValidColor = (color) => color in COLOR;
 
 // Coordinate conversion
 export const i2xy = (i) => [i % 8, (i / 8) | 0];
@@ -66,10 +66,15 @@ export function getPossibleMoves(gameState) {
 }
 
 export function initGame() {
-  const f = Array(64).fill(STATE.NONE);
-  f[xy2i(3, 3)] = f[xy2i(4, 4)] = STATE.WHITE;
-  f[xy2i(4, 3)] = f[xy2i(3, 4)] = STATE.BLACK;
-  const state = { move: STATE.BLACK, board: f, pass: false };
+  const board = Array(64).fill(STATE.NONE);
+  board[xy2i(3, 3)] = board[xy2i(4, 4)] = STATE.WHITE;
+  board[xy2i(4, 3)] = board[xy2i(3, 4)] = STATE.BLACK;
+  const state = {
+    move: STATE.BLACK,
+    board,
+    pass: false,
+    playerColor: undefined
+  };
   state.possibleMoves = getPossibleMoves(state);
   return state;
 }

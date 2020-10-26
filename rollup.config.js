@@ -19,6 +19,7 @@ function runServer() {
     writeBundle() {
       if (proc) {
         proc.kill('SIGTERM');
+        console.info('Killed outdated server.');
       }
       proc = cp.spawn(
         'node',
@@ -58,7 +59,7 @@ const app = {
 const server = {
   input: 'server/index.js',
   output: { sourcemap: dev, file: 'index.js', format: 'cjs' },
-  plugins: [dev && runServer()],
+  plugins: [resolve(), dev && runServer()],
   external: builtinModules.concat(Object.keys(pkg.dependencies)),
   watch: { clearScreen: false },
 };

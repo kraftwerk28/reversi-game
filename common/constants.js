@@ -4,7 +4,10 @@ export const STATE = {
 };
 
 export const ALPHABET = 'ABCDEFGH';
-export const COLORS = ['white', 'black'];
+export const COLOR = {
+  black: STATE.BLACK,
+  white: STATE.WHITE,
+}
 export const PASS = 'pass';
 
 export const MSG_TYPE = {

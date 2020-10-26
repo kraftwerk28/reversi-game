@@ -1,8 +1,10 @@
 import { Server as WsServer } from 'ws';
 import cp from 'child_process';
 import assert from 'assert';
-import { i2ab, isValidAB, isValidColor, PASS } from '../common/utils';
-import { CHAN_TYPE, MSG_TYPE } from '../common';
+import {
+  i2ab, isValidAB, isValidColor,
+  PASS, CHAN_TYPE, MSG_TYPE,
+} from '../common';
 
 /**
  * @typedef {{ type: MSG_TYPE, payload: any }} Message
@@ -15,7 +17,13 @@ let wsServer;
 let connQueueIndex = 0;
 let connQueueHead = connQueueIndex;
 
-export class MsgChan {
+export async function createChan(...args) {
+  const chan = new MsgChan(...args);
+  await chan.waitConnected();
+  return chan;
+}
+
+class MsgChan {
   constructor(type, params) {
     this.type = type;
     this._connected = false;
@@ -80,8 +88,10 @@ export class MsgChan {
     });
   }
 
-  send(type, payload) {
+  send(message) {
+    const { type, payload } = message;
     const raw = this._encode(type, payload);
+    console.log(raw);
 
     if (this.type === CHAN_TYPE.CMD) {
       this.proc.stdin.write(raw);
@@ -103,15 +113,19 @@ export class MsgChan {
     if (this.type === CHAN_TYPE.WS) {
       try {
         const [type, payload] = JSON.parse(raw);
-        return { type, payload };
-      } catch {
+        if (Object.values(MSG_TYPE).includes(type)) {
+          return { type, payload };
+        }
+        throw new Error;
+      } catch (err) {
+        console.error('Failed to parse message:', err);
         return { type: MSG_TYPE.ERR };
       }
     } else if (this.type === CHAN_TYPE.CMD) {
       if (isValidAB(raw)) {
         return { type: MSG_TYPE.COORD, payload: ab2xy(raw) };
       } else if (isValidColor(raw)) {
-        return { type: MSG_TYPE.COLOR, payload: raw };
+        return { type: MSG_TYPE.COLOR, payload: COLOR[raw] };
       } else if (raw === PASS) {
         return { type: MSG_TYPE.PASS };
       } else {

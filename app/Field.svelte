@@ -2,9 +2,9 @@
   import Disc from './Disc.svelte';
   import GameResults from './GameResults.svelte';
   import Marker, { onMouseMove, onMouseLeave } from './Marker.svelte';
-  import { STATE } from '../common/utils';
+  import { STATE } from '../common';
   import { gameState } from './game';
-  import { setDisc } from './controllers';
+  import { sendMove } from './controllers';
 
   let fieldNode;
   let fieldBounds;
@@ -18,6 +18,7 @@
   $: isGameEnded = [STATE.TIE, STATE.BLACK_WON, STATE.WHITE_WON].includes(
     $gameState.move
   );
+  $: isDisabled = $gameState.move !== $gameState.playerColor;
 </script>
 
 <style>
@@ -46,6 +47,19 @@
   .blurred {
     filter: blur(8px);
   }
+  .disabled-overlay {
+    cursor: not-allowed;
+    position: absolute;
+    top: 0;
+    right: 0;
+    left: 0;
+    bottom: 0;
+    display: none;
+  }
+
+  .disabled-overlay.isDisabled {
+    display: block;
+  }
 </style>
 
 <svelte:window on:resize={setBounds} />
@@ -66,9 +80,10 @@
     on:mousemove={(e) => onMouseMove(e, fieldBounds)}
     on:mouseleave={onMouseLeave}>
     {#each $gameState.board as item, i}
-      <Disc on:click={() => setDisc(i)} color={item} />
+      <Disc on:click={() => sendMove(i)} color={item} />
     {/each}
     <Marker {fieldBounds} />
+    <div class="disabled-overlay" class:isDisabled />
   </div>
   <GameResults />
 </div>

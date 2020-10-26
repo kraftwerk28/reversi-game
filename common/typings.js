@@ -1,3 +1,7 @@
+/**
+ * This is a draft and isn't actually used in code
+ */
+
 // Model:
 type Color = 'black' | 'white';
 type Disc = { x: number, y: number, Color };

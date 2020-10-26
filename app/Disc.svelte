@@ -1,5 +1,5 @@
 <script>
-  import { STATE } from '../common/utils';
+  import { STATE } from '../common';
   // Disc flip animation
   export const swapTrn = (_, { duration = 300 }) => ({
     duration,
