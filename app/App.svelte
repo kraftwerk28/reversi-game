@@ -17,7 +17,6 @@
 
       const { payload: blackHole } = await ws.recv();
       const { payload: playerColor } = await ws.recv();
-      console.info(blackHole);
 
       setMyColor(playerColor);
       setBlackHole(blackHole);

@@ -68,19 +68,18 @@ export function setDisc(i) {
   gameState.update(updateCheckWinner)
 }
 
-export function sendMove(i) {
+export function sendMove(i, fromUser = false) {
   gameState.update((state) => {
     if (!state.possibleMoves.has(i)) {
       return state;
     }
-    if (state.singleplayer) {
-      return updateCheckWinner(updateBoard(i)(state));
-    } else {
+
+    if (!state.singleplayer && fromUser) {
       connect().then((ws) => {
         ws.send(MSG_TYPE.COORD, i2xy(i));
       });
-      return state;
     }
+    return updateCheckWinner(updateBoard(i)(state));
   })
 }
 

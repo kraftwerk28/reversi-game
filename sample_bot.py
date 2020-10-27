@@ -5,8 +5,6 @@ import sys
 
 
 ALPHABET = 'ABCDEFGH'
-logfile = open('bot.log', 'w')
-boardlog = open('board.log', 'w')
 
 
 def xy2i(x, y):
@@ -32,32 +30,37 @@ class Tile:
     white = 2
     blackhole = 3
 
+    @classmethod
+    def opposite(self, cl):
+        if cl == self.black:
+            return self.white
+        elif cl == self.white:
+            return self.black
+        else:
+            raise ValueError()
+
 
 class GameState:
-    directions = [
-        (1, 0), (1, 1), (0, 1), (-1, 1),
-        (-1, 0), (-1, -1), (0, -1), (1, -1),
-    ]
+    directions = [(1, 0), (1, 1), (0, 1), (-1, 1),
+                  (-1, 0), (-1, -1), (0, -1), (1, -1)]
 
     def __init__(self, color, black_hole):
         board = [Tile.none for _ in range(64)]
         board[xy2i(3, 3)] = board[xy2i(4, 4)] = Tile.white
         board[xy2i(4, 3)] = board[xy2i(3, 4)] = Tile.black
         self.board = board
-        self.move = Tile.black if color == 'black' else Tile.white
+        self.color = Tile.black if color == 'black' else Tile.white
         self.black_hole = ab2i(black_hole)
+        self.logfile = open('bot.log', 'w')
+        self.boardlog = open('board.log', 'w')
 
     def get_allowed_moves(self, opposite=False):
-        if not opposite:
-            c1 = self.move
-            c2 = Tile.white if self.move == Tile.black else Tile.black
-        else:
-            c1 = Tile.white if self.move == Tile.black else Tile.black
-            c2 = self.move
+        color1 = Tile.opposite(self.color) if opposite else self.color
+        color2 = Tile.opposite(color1)
         allowed_moves = dict()
 
         for index, tile in enumerate(self.board):
-            if tile != c1:
+            if tile != color1:
                 continue
             x, y = i2xy(index)
             for dx, dy in GameState.directions:
@@ -66,7 +69,7 @@ class GameState:
                 while _x >= 0 and _x < 8 and _y >= 0 and _y < 8:
                     idx = xy2i(_x, _y)
                     c = self.board[idx]
-                    if c == c2:
+                    if c == color2:
                         row2flip.append(idx)
                     elif c == Tile.none:
                         if row2flip and idx != self.black_hole:
@@ -83,15 +86,15 @@ class GameState:
         allowed_moves = self.get_allowed_moves()
         random_move = random.choice(list(allowed_moves.keys()))
         print(i2ab(random_move))
-        logfile.write('my move: ' + i2ab(random_move) + '\n')
-        self.board[random_move] = self.move
+        self.logfile.write('my move: ' + i2ab(random_move) + '\n')
+        self.board[random_move] = self.color
         to_be_flipped = allowed_moves[random_move]
         for i in to_be_flipped:
-            self.board[i] = self.move
+            self.board[i] = self.color
 
-        other_color = Tile.white if self.move == Tile.black else Tile.black
+        other_color = Tile.white if self.color == Tile.black else Tile.black
         other_move = input()
-        logfile.write('his move: ' + other_move + '\n')
+        self.logfile.write('his move: ' + other_move + '\n')
 
         allowed_moves = self.get_allowed_moves(opposite=True)
         other_move_index = ab2i(other_move)
@@ -100,12 +103,15 @@ class GameState:
         for i in to_be_flipped:
             self.board[i] = other_color
 
-        boardlog.write(self.repr_board() + '\n\n')
+        self.boardlog.write(self.repr_board() + '\n\n')
 
     def run(self):
-        while True:
-            self.step()
-            time.sleep(1)
+        try:
+            while True:
+                self.step()
+                time.sleep(1)
+        except Exception as e:
+            self.logfile.write('\n' + repr(e))
 
     def repr_board(self):
         row_i = 0
@@ -131,13 +137,4 @@ if __name__ == '__main__':
     time.sleep(1)
     blackhole = input()
     color = input()
-    state = GameState(color, blackhole)
-
-    try:
-        state.run()
-    except Exception as e:
-        logfile.write('\n' + repr(e) + '\n')
-        sys.exit(1)
-    # f.write('\n'.join((blackhole, color)))
-    # time.sleep(2)
-    # print('D3')
+    GameState(color, blackhole).run()

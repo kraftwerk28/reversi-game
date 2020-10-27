@@ -143,7 +143,7 @@
     {#each $gameState.board as item, i}
       <Disc
         blackhole={$gameState.blackHole === i}
-        on:click={() => sendMove(i)}
+        on:click={() => sendMove(i, true)}
         color={item} />
     {/each}
 
