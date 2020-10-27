@@ -1,63 +1,26 @@
-import fastify from 'fastify';
-import fastifyStatic from 'fastify-static';
-import path from 'path';
 import * as yargs from 'yargs';
-
-import { createChan } from './message';
-import { CHAN_TYPE, MSG_TYPE, COLOR, initGame, xy2i } from '../common';
-
-/**
- * Used for (future) move validation
- */
-function performMove(gameState, coord) {
-  gameState.board[xy2i(coord.x, coord.y)];
-}
-
-/**
- * Reducer
- */
-function processMessage({ type, payload }, gameState) {
-  switch (type) {
-    case MSG_TYPE.COORD:
-      performMove(gameState, payload);
-      return;
-    default:
-      console.error(`Unknown message type: ${type}; with payload ${payload}`);
-      return;
-  }
-}
-
-function createChannels(args, server) {
-  const chans = [];
-  for (const cmd of args.bot.slice(0, 2)) {
-    chans.push(createChan(CHAN_TYPE.CMD, { cmd }));
-  }
-  while (chans.length < 2) {
-    chans.push(createChan(CHAN_TYPE.WS, { server }));
-  }
-  return Promise.all(chans);
-}
-
-function initServer(_args) {
-  const app = fastify();
-  app.register(fastifyStatic, { root: path.resolve(__dirname, 'public/') });
-  const port = process.env.PORT || 8080;
-  app.listen(port, () => {
-    console.info(`Browser link: http://127.0.0.1:${port}.`);
-  });
-  return app;
-}
+import { MSG_TYPE, COLOR, initGame, i2xy } from '../common';
+import { initServer, createChannels, processMessage } from './utils';
 
 async function main() {
   const args = yargs
-    .array('b')
-    .default('b', [])
-    .alias('b', 'bot')
-    .describe('b', 'Provide a shell command to run a bot (up to 2).')
-    .alias('s', 'singleplayer')
-    .boolean('s')
-    .describe('s', 'Don\'t open any websocket, just serve static.')
-    .default('s', false)
+    .option('bot', {
+      alias: 'b',
+      type: 'array',
+      default: [],
+      desc: 'Provide a shell command to run a bot (up to 2).'
+    })
+    .option('singleplayer', {
+      alias: 's',
+      type: 'boolean',
+      default: false,
+      desc: 'Don\'t open any websocket, just serve static files.'
+    })
+    .option('delay', {
+      alias: 'd',
+      type: 'number',
+      desc: 'Delay in ms between bot moves',
+    })
     .strict()
     .help()
     .argv;
@@ -72,6 +35,9 @@ async function main() {
   console.info('Channels connected.');
 
   // Game process
+  const blackHoleCoord = i2xy(gameState.blackHole);
+  chan1.send({ type: MSG_TYPE.COORD, payload: blackHoleCoord });
+  chan2.send({ type: MSG_TYPE.COORD, payload: blackHoleCoord });
   chan1.send({ type: MSG_TYPE.COLOR, payload: COLOR.black });
   chan2.send({ type: MSG_TYPE.COLOR, payload: COLOR.white });
 

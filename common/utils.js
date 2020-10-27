@@ -29,12 +29,12 @@ const directions = [
 ];
 
 export function getPossibleMoves(gameState) {
-  const { move, board } = gameState;
+  const { move, board, blackHole } = gameState;
   const allowedMoves = new Map();
   let otherColor = move === STATE.BLACK ? STATE.WHITE : STATE.BLACK;
   board
     .map((cl, idx) => [cl, idx])
-    .filter(([cl]) => cl === move)
+    .filter(([cl, _]) => cl === move)
     .forEach(([_, i]) => {
       const [x, y] = i2xy(i);
 
@@ -50,7 +50,7 @@ export function getPossibleMoves(gameState) {
           if (c === otherColor) {
             rowToFlip.push(idx);
           } else if (c === STATE.NONE) {
-            if (rowToFlip.length) {
+            if (rowToFlip.length && idx !== blackHole) {
               allowedMoves.set(
                 idx,
                 rowToFlip.concat(allowedMoves.get(idx) || [])
@@ -77,6 +77,7 @@ export function initGame() {
     playerColor: undefined,
     isLoading: true,
     singleplayer: false,
+    blackHole: getBlackHoleIndex(),
   };
   state.possibleMoves = getPossibleMoves(state);
   return state;
@@ -88,7 +89,7 @@ export function countDiscs(board) {
   for (let i = 0; i < board.length; i++) {
     if (board[i] === STATE.BLACK) black++;
     if (board[i] === STATE.WHITE) white++;
-  }
+  } порахувати
   return { black, white };
 }
 
@@ -103,4 +104,9 @@ export function choseWinner(board) {
     result = 'Tie, friendship won';
   }
   alert(`Black: ${black}\nWhite: ${white}\n${result}`);
+}
+
+export function getBlackHoleIndex() {
+  const range = Math.floor(Math.random() * 27);
+  return Math.random() < 0.5 ? range : range + 37;
 }

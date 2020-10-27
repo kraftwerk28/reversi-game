@@ -13,14 +13,15 @@
   });
 
   export let color;
+  export let blackhole = false;
 </script>
 
 <style>
   .root {
     display: block;
     position: relative;
-    width: 3em;
-    height: 3em;
+    width: var(--tile-size);
+    height: var(--tile-size);
     background: green;
     cursor: pointer;
   }
@@ -39,14 +40,18 @@
   .b {
     background: black;
   }
+
+  .blackhole {
+    background: #000;
+  }
 </style>
 
-<div class="root" on:click>
-  {#if color === STATE.BLACK}
+<div class="root" on:click class:blackhole>
+  {#if color === STATE.BLACK && !blackhole}
     <div class="disc b" transition:swapTrn />
   {/if}
 
-  {#if color === STATE.WHITE}
+  {#if (color === STATE.WHITE) & !blackhole}
     <div class="disc w" transition:swapTrn />
   {/if}
 </div>

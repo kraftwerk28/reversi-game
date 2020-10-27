@@ -9,7 +9,7 @@
     "build:server": "NODE_ENV=production rollup -c --environment NODE_ENV:production",
     "start": "NODE_ENV=development rollup -cw --environment NODE_ENV:development,SVELTE_APP",
     "server": "rollup -cw --environment NODE_ENV:development",
-    "deploy": "npm run build && gh-pages -d public/"
+    "deploy": "npm run build && rm -rf build/**/*.map && gh-pages -b gh-pages -d build/public/ -f && gh-pages -d build/ -b build -f"
   },
   "repository": {
     "type": "git",

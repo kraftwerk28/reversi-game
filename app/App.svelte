@@ -7,15 +7,20 @@
     processMessage,
     setMyColor,
     updateState,
+    setBlackHole,
   } from './controllers';
 
   onMount(async () => {
     try {
       const ws = await connect();
       console.info('Websocket Connected');
-      const playerColor = await ws.recv();
-      console.info(playerColor);
-      setMyColor(playerColor.payload);
+
+      const { payload: blackHole } = await ws.recv();
+      const { payload: playerColor } = await ws.recv();
+      console.info(blackHole);
+
+      setMyColor(playerColor);
+      setBlackHole(blackHole);
 
       while (true) {
         const message = await ws.recv();
@@ -27,6 +32,13 @@
     }
   });
 </script>
+
+<style>
+  :global(:root) {
+    --tile-size: 3em;
+    --tile-gap: 2px;
+  }
+</style>
 
 <svelte:options immutable={true} />
 <Field />

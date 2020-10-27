@@ -110,3 +110,7 @@ export function processMessage({ type, payload }) {
       break;
   }
 }
+
+export function setBlackHole(blackHoleCoord) {
+  updateState({ blackHole: xy2i(blackHoleCoord[0], blackHoleCoord[1]) });
+}
