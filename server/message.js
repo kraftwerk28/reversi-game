@@ -4,7 +4,7 @@ import readline from 'readline';
 import { Server as WsServer } from 'ws';
 
 import {
-  i2ab, isValidAB, isValidColor, ab2xy,
+  xy2ab, isValidAB, isValidColor, ab2xy,
   PASS, CHAN_TYPE, MSG_TYPE, COLOR,
 } from '../common';
 
@@ -44,12 +44,12 @@ class MsgChan {
         console.info(`Bot terminated with exit code ${code}.`);
       });
 
-      // const rl = readline.createInterface({
-      //   input: proc.stdout,
-      //   output: proc.stdin,
-      //   terminal: false,
-      // });
-      const rl = readline.createInterface(proc.stdout);
+      const rl = readline.createInterface({
+        input: proc.stdout,
+        output: proc.stdin,
+        terminal: false,
+      });
+      // const rl = readline.createInterface(proc.stdout);
       rl.on('line', processMessage);
 
       this._connected = true;
@@ -160,7 +160,8 @@ class MsgChan {
     } else if (this.type === CHAN_TYPE.CMD) {
       switch (type) {
         case MSG_TYPE.COORD:
-          return i2ab(payload);
+          const [x, y] = payload;
+          return xy2ab(x, y);
         case MSG_TYPE.COLOR:
           return payload === COLOR.black ? 'black' : 'white';
         default:

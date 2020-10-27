@@ -70,6 +70,9 @@ export function setDisc(i) {
 
 export function sendMove(i) {
   gameState.update((state) => {
+    if (!state.possibleMoves.has(i)) {
+      return state;
+    }
     if (state.singleplayer) {
       return updateCheckWinner(updateBoard(i)(state));
     } else {

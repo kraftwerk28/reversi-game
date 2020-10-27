@@ -1,5 +1,5 @@
 import * as yargs from 'yargs';
-import { MSG_TYPE, COLOR, initGame, i2xy } from '../common';
+import { CHAN_TYPE, MSG_TYPE, COLOR, initGame, i2xy } from '../common';
 import { initServer, createChannels, processMessage } from './utils';
 
 async function main() {
@@ -44,13 +44,17 @@ async function main() {
   while (true) {
     const blMsg = await chan1.recv();
     processMessage(blMsg, gameState);
-    chan1.send(blMsg);
+    if (chan1.type === CHAN_TYPE.WS) {
+      chan1.send(blMsg);
+    }
     chan2.send(blMsg);
 
     const whMsg = await chan2.recv();
     processMessage(whMsg, gameState);
     chan1.send(whMsg);
-    chan2.send(whMsg);
+    if (chan2.type === CHAN_TYPE.WS) {
+      chan2.send(whMsg);
+    }
   }
 }
 
