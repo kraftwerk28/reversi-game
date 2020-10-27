@@ -8,18 +8,18 @@ async function main() {
       alias: 'b',
       type: 'array',
       default: [],
-      desc: 'Provide a shell command to run a bot (up to 2).'
+      desc: 'Provide a shell command to run a bot (up to 2 bots).',
     })
     .option('singleplayer', {
       alias: 's',
       type: 'boolean',
       default: false,
-      desc: 'Don\'t open any websocket, just serve static files.'
+      desc: 'No players or bots are involved, just play with youself.',
     })
     .option('delay', {
       alias: 'd',
       type: 'number',
-      desc: 'Delay in ms between bot moves',
+      desc: 'Delay in ms between bot moves (WIP)',
     })
     .strict()
     .help()
