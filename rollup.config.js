@@ -1,5 +1,6 @@
 import { builtinModules } from 'module';
 import cp from 'child_process';
+import path from 'path';
 import pkg from './package.json';
 
 import svelte from 'rollup-plugin-svelte';
@@ -10,8 +11,9 @@ import { terser } from 'rollup-plugin-terser';
 import copy from 'rollup-plugin-copy';
 
 const dev = process.env.NODE_ENV === 'development';
-
-const serverArgs = ['--bot', 'botcmd1'];
+const outputPath = path.resolve(__dirname, 'build/');
+// const serverArgs = ['-b', './sample_bot.py'];
+const serverArgs = ['-s'];
 
 function runServer() {
   let proc;
@@ -23,7 +25,7 @@ function runServer() {
       }
       proc = cp.spawn(
         'node',
-        ['--enable-source-maps', './', '--', ...serverArgs],
+        ['--enable-source-maps', './build/index.js', ...serverArgs],
         { stdio: ['ignore', 'inherit', 'inherit'], shell: true, }
       );
     },
@@ -36,7 +38,7 @@ const app = {
     sourcemap: dev,
     format: 'iife',
     name: 'app',
-    file: 'public/build/bundle.js',
+    file: path.resolve(outputPath, 'public/build/bundle.js'),
   },
   plugins: [
     svelte({
@@ -50,7 +52,9 @@ const app = {
     dev && livereload('public'),
     !dev && terser(),
     copy({
-      targets: [{ src: 'app/public/*', dest: 'public/' }],
+      targets: [
+        { src: 'app/public/*', dest: path.resolve(outputPath, 'public/') },
+      ],
     }),
   ],
   watch: { clearScreen: false },
@@ -58,7 +62,11 @@ const app = {
 
 const server = {
   input: 'server/index.js',
-  output: { sourcemap: dev, file: 'index.js', format: 'cjs' },
+  output: {
+    sourcemap: dev,
+    file: path.resolve(outputPath, 'index.js'),
+    format: 'cjs'
+  },
   plugins: [resolve(), dev && runServer()],
   external: builtinModules.concat(Object.keys(pkg.dependencies)),
   watch: { clearScreen: false },

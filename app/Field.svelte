@@ -18,7 +18,20 @@
   $: isGameEnded = [STATE.TIE, STATE.BLACK_WON, STATE.WHITE_WON].includes(
     $gameState.move
   );
-  $: isDisabled = $gameState.move !== $gameState.playerColor;
+
+  let interactionDisabled = true;
+  $: {
+    if ($gameState.isLoading) {
+      interactionDisabled = true;
+    } else if (
+      typeof $gameState.playerColor === 'number' &&
+      $gameState.playerColor !== $gameState.move
+    ) {
+      interactionDisabled = true;
+    } else {
+      interactionDisabled = false;
+    }
+  }
 </script>
 
 <style>
@@ -55,10 +68,12 @@
     left: 0;
     bottom: 0;
     display: none;
+    align-items: center;
+    justify-content: center;
   }
 
-  .disabled-overlay.isDisabled {
-    display: block;
+  .disabled-overlay.interactionDisabled {
+    display: flex;
   }
 </style>
 
@@ -83,7 +98,9 @@
       <Disc on:click={() => sendMove(i)} color={item} />
     {/each}
     <Marker {fieldBounds} />
-    <div class="disabled-overlay" class:isDisabled />
+    <div class="disabled-overlay" class:interactionDisabled>
+      {#if $gameState.isLoading}Loading...{/if}
+    </div>
   </div>
   <GameResults />
 </div>

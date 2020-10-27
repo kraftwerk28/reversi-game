@@ -1,5 +1,3 @@
-'use strict';
-
 import fastify from 'fastify';
 import fastifyStatic from 'fastify-static';
 import path from 'path';
@@ -31,7 +29,7 @@ function processMessage({ type, payload }, gameState) {
 
 function createChannels(args, server) {
   const chans = [];
-  for (const cmd of args.bot || []) {
+  for (const cmd of args.bot.slice(0, 2)) {
     chans.push(createChan(CHAN_TYPE.CMD, { cmd }));
   }
   while (chans.length < 2) {
@@ -45,15 +43,30 @@ function initServer(_args) {
   app.register(fastifyStatic, { root: path.resolve(__dirname, 'public/') });
   const port = process.env.PORT || 8080;
   app.listen(port, () => {
-    console.log(`http://127.0.0.1:${port}`);
+    console.info(`Browser link: http://127.0.0.1:${port}.`);
   });
   return app;
 }
 
 async function main() {
-  const args = yargs.array('bot').argv;
+  const args = yargs
+    .array('b')
+    .default('b', [])
+    .alias('b', 'bot')
+    .describe('b', 'Provide a shell command to run a bot (up to 2).')
+    .alias('s', 'singleplayer')
+    .boolean('s')
+    .describe('s', 'Don\'t open any websocket, just serve static.')
+    .default('s', false)
+    .strict()
+    .help()
+    .argv;
 
   const fastifyApp = await initServer(args);
+  if (args.singleplayer) {
+    return;
+  }
+
   const gameState = initGame(args);
   const [chan1, chan2] = await createChannels(args, fastifyApp.server);
   console.info('Channels connected.');
@@ -64,13 +77,11 @@ async function main() {
 
   while (true) {
     const blMsg = await chan1.recv();
-    console.info(blMsg);
     processMessage(blMsg, gameState);
     chan1.send(blMsg);
     chan2.send(blMsg);
 
     const whMsg = await chan2.recv();
-    console.info(whMsg);
     processMessage(whMsg, gameState);
     chan1.send(whMsg);
     chan2.send(whMsg);

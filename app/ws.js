@@ -12,8 +12,11 @@ class WS {
       this._acceptMessage(ev.data);
     });
     ws.addEventListener('open', () => {
-      this._waitConnectedQueue.forEach(resolve => resolve());
+      this._waitConnectedQueue.forEach(([resolve, _]) => resolve());
       this._connected = true;
+    });
+    ws.addEventListener('error', () => {
+      this._waitConnectedQueue.forEach(([_, reject]) => reject());
     });
     this._ws = ws;
     this._awaitMessageQueue = [];
@@ -57,8 +60,8 @@ class WS {
     if (this._connected) {
       return Promise.resolve();
     }
-    return new Promise((resolve) => {
-      this._waitConnectedQueue.push(resolve);
+    return new Promise((resolve, reject) => {
+      this._waitConnectedQueue.push([resolve, reject]);
     });
   }
 }

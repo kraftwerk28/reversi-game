@@ -9,67 +9,76 @@ import {
 } from '../common';
 import { connect } from './ws';
 
-function switchMove(state) {
-  return state.move === STATE.BLACK ? STATE.WHITE : STATE.BLACK
+export function updateState(partialState) {
+  gameState.update((state) => ({ ...state, ...partialState }));
 }
 
-function checkWinner() {
-  gameState.update((state) => {
-    const { board, possibleMoves } = state;
+const switchMove = (state) =>
+  state.move === STATE.BLACK ? STATE.WHITE : STATE.BLACK
 
-    if (board.every((c) => c !== STATE.NONE)) {
-      // Board is full and there's 
-      const nBlack = board.reduce(
-        (acc, c) => acc + (c === STATE.BLACK ? 1 : 0),
-        0
-      );
-      if (nBlack === 32) {
-        state.move = STATE.TIE;
-      } else if (nBlack > 32) {
-        state.move = STATE.BLACK_WON;
-      } else {
-        state.move = STATE.WHITE_WON;
-      }
-      return { ...state };
-    }
-
-    if (possibleMoves.size === 0) {
-      if (state.pass) {
-        state.move = STATE.TIE;
-      } else {
-        state.move = switchMove(state);
-        state.pass = true;
-      }
-      return { ...state };
-    }
+const updateBoard = (i) => (state) => {
+  const rowToFlip = state.possibleMoves.get(i);
+  if (!rowToFlip) {
     return state;
-  });
+  }
+  const board = state.board.slice();
+  board[i] = state.move;
+  for (const i of rowToFlip) {
+    board[i] = state.move;
+  }
+  state.move = switchMove(state);
+  state.board = board;
+  state.possibleMoves = getPossibleMoves(state);
+  return { ...state };
+}
+
+const updateCheckWinner = (state) => {
+  const { board, possibleMoves } = state;
+
+  if (board.every((c) => c !== STATE.NONE)) {
+    // Board is full and there's 
+    const nBlack = board.reduce(
+      (acc, c) => acc + (c === STATE.BLACK ? 1 : 0),
+      0
+    );
+    if (nBlack === 32) {
+      state.move = STATE.TIE;
+    } else if (nBlack > 32) {
+      state.move = STATE.BLACK_WON;
+    } else {
+      state.move = STATE.WHITE_WON;
+    }
+    return { ...state };
+  }
+
+  if (possibleMoves.size === 0) {
+    if (state.pass) {
+      state.move = STATE.TIE;
+    } else {
+      state.move = switchMove(state);
+      state.pass = true;
+    }
+    return { ...state };
+  }
+  return state;
 }
 
 export function setDisc(i) {
-  gameState.update(s => {
-    const rowToFlip = s.possibleMoves.get(i);
-    if (!rowToFlip) {
-      return s;
-    }
-    const board = s.board.slice();
-    board[i] = s.move;
-    for (const i of rowToFlip) {
-      board[i] = s.move;
-    }
-    s.move = switchMove(s);
-    s.board = board;
-    s.possibleMoves = getPossibleMoves(s);
-    return { ...s };
-  });
-  checkWinner();
+  gameState.update(updateBoard(i));
+  gameState.update(updateCheckWinner)
 }
 
 export function sendMove(i) {
-  connect().then((ws) => {
-    const [x, y] = i2xy(i);
-    ws.send(MSG_TYPE.COORD, { x, y });
-  });
+  gameState.update((state) => {
+    if (state.singleplayer) {
+      return updateCheckWinner(updateBoard(i)(state));
+    } else {
+      connect().then((ws) => {
+        ws.send(MSG_TYPE.COORD, i2xy(i));
+      });
+      return state;
+    }
+  })
 }
 
 export function restartGame() {
@@ -77,15 +86,24 @@ export function restartGame() {
 }
 
 export function setMyColor(color) {
-  gameState.update((state) => ({ ...state, playerColor: color }));
+  updateState({ playerColor: color, isLoading: false });
+}
+
+export function setLoading(loading = true) {
+  updateState({ isLoading: loading });
+}
+
+export function setSPMode() {
+  updateState({ singleplayer: true });
 }
 
 export function processMessage({ type, payload }) {
   switch (type) {
-    case MSG_TYPE.COORD:
-      const i = xy2i(payload.x, payload.y);
-      setDisc(i);
+    case MSG_TYPE.COORD: {
+      const [x, y] = payload;
+      setDisc(xy2i(x, y));
       break;
+    }
     case MSG_TYPE.COLOR:
       setMyColor(payload);
     default:

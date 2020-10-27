@@ -1,4 +1,5 @@
-import { STATE, COLOR } from './constants';
+import { STATE, COLOR, ALPHABET } from './constants';
+
 // Validators
 export const isValidAB = (ab) =>
   typeof ab === 'string' &&
@@ -14,7 +15,7 @@ export const xy2ab = (x, y) => ALPHABET[x] + (y + 1).toString();
 export const i2ab = (i) => xy2ab(i % 8, (i / 8) | 0);
 export const ab2xy = (ab) => [
   ALPHABET.indexOf(ab[0].toUpperCase()),
-  parseInt(ab[1]),
+  parseInt(ab[1] - 1),
 ];
 export const ab2i = (ab) => xy2i(
   ALPHABET.indexOf(ab[0].toUpperCase()),
@@ -73,7 +74,9 @@ export function initGame() {
     move: STATE.BLACK,
     board,
     pass: false,
-    playerColor: undefined
+    playerColor: undefined,
+    isLoading: true,
+    singleplayer: false,
   };
   state.possibleMoves = getPossibleMoves(state);
   return state;

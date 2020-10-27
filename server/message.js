@@ -1,9 +1,11 @@
-import { Server as WsServer } from 'ws';
-import cp from 'child_process';
 import assert from 'assert';
+import cp from 'child_process';
+import readline from 'readline';
+import { Server as WsServer } from 'ws';
+
 import {
-  i2ab, isValidAB, isValidColor,
-  PASS, CHAN_TYPE, MSG_TYPE,
+  i2ab, isValidAB, isValidColor, ab2xy,
+  PASS, CHAN_TYPE, MSG_TYPE, COLOR,
 } from '../common';
 
 /**
@@ -33,13 +35,28 @@ class MsgChan {
 
     const processMessage = this._acceptMessage.bind(this);
     if (type === CHAN_TYPE.CMD) {
+      console.info(`Launching command line bot: "${params.cmd}".`);
       assert.ok(params.cmd, 'Command must be present');
+
       const proc = cp.exec(params.cmd);
-      proc.stdout.on('data', processMessage);
+
+      proc.on('close', (code) => {
+        console.info(`Bot terminated with exit code ${code}.`);
+      });
+
+      // const rl = readline.createInterface({
+      //   input: proc.stdout,
+      //   output: proc.stdin,
+      //   terminal: false,
+      // });
+      const rl = readline.createInterface(proc.stdout);
+      rl.on('line', processMessage);
+
       this._connected = true;
       this.proc = proc;
 
     } else if (type === CHAN_TYPE.WS) {
+      console.info(`Opening websocket.`);
       if (!wsServer) {
         assert.ok(params.server, 'Server must be specified');
         wsServer = new WsServer({ server: params.server });
@@ -63,7 +80,11 @@ class MsgChan {
   }
 
   _acceptMessage(raw) {
+    if (this.type === CHAN_TYPE.CMD) {
+      console.info(`bot > ${raw}`);
+    }
     const parsed = this._decode(raw);
+    console.info(`Message > type: ${parsed.type}; payload: ${parsed.payload}.`);
 
     if (this._awaitMessageQueue.length) {
       const resolve = this._awaitMessageQueue.shift();
@@ -91,10 +112,9 @@ class MsgChan {
   send(message) {
     const { type, payload } = message;
     const raw = this._encode(type, payload);
-    console.log(raw);
 
     if (this.type === CHAN_TYPE.CMD) {
-      this.proc.stdin.write(raw);
+      this.proc.stdin.write(raw + '\n');
     } else if (this.type === CHAN_TYPE.WS) {
       this.conn.send(raw);
     }
@@ -142,7 +162,7 @@ class MsgChan {
         case MSG_TYPE.COORD:
           return i2ab(payload);
         case MSG_TYPE.COLOR:
-          return payload;
+          return payload === COLOR.black ? 'black' : 'white';
         default:
           return;
       }
