@@ -44,9 +44,9 @@ const updateCheckWinner = (state) => {
     if (nBlack === 32) {
       state.move = STATE.TIE;
     } else if (nBlack > 32) {
-      state.move = STATE.BLACK_WON;
-    } else {
       state.move = STATE.WHITE_WON;
+    } else {
+      state.move = STATE.BLACK_WON;
     }
     return { ...state };
   }
