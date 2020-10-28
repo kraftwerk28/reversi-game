@@ -2,12 +2,14 @@
 import time
 import random
 import sys
+import traceback
 
 
 ALPHABET = 'ABCDEFGH'
 
 
-def xy2i(x, y):
+def xy2i(pos):
+    x, y = pos
     return y * 8 + x
 
 
@@ -16,7 +18,7 @@ def i2xy(i):
 
 
 def ab2i(ab):
-    return xy2i(ALPHABET.index(ab[0].upper()), int(ab[1]) - 1)
+    return xy2i((ALPHABET.index(ab[0].upper()), int(ab[1]) - 1))
 
 
 def i2ab(i):
@@ -44,15 +46,27 @@ class GameState:
     directions = [(1, 0), (1, 1), (0, 1), (-1, 1),
                   (-1, 0), (-1, -1), (0, -1), (1, -1)]
 
-    def __init__(self, color, black_hole):
+    def __init__(self, color, black_hole, bot_label=None):
         board = [Tile.none for _ in range(64)]
-        board[xy2i(3, 3)] = board[xy2i(4, 4)] = Tile.white
-        board[xy2i(4, 3)] = board[xy2i(3, 4)] = Tile.black
+        board[xy2i((3, 3))] = board[xy2i((4, 4))] = Tile.white
+        board[xy2i((4, 3))] = board[xy2i((3, 4))] = Tile.black
         self.board = board
-        self.color = Tile.black if color == 'black' else Tile.white
         self.black_hole = ab2i(black_hole)
-        self.logfile = open('bot.log', 'w')
-        self.boardlog = open('board.log', 'w')
+        if bot_label is None:
+            self.logfile = None
+        else:
+            self.logfile = open(f'{bot_label}.log', 'w')
+
+        if color == 'black':
+            self.log(f'my color: black')
+            self.color = Tile.black
+        else:
+            self.log(f'my color: white')
+            self.color = Tile.white
+
+    def log(self, data):
+        if self.logfile is not None:
+            self.logfile.write(data + '\n')
 
     def get_allowed_moves(self, opposite=False):
         color1 = Tile.opposite(self.color) if opposite else self.color
@@ -67,7 +81,7 @@ class GameState:
                 row2flip = []
                 _x, _y = x + dx, y + dy
                 while _x >= 0 and _x < 8 and _y >= 0 and _y < 8:
-                    idx = xy2i(_x, _y)
+                    idx = xy2i((_x, _y))
                     c = self.board[idx]
                     if c == color2:
                         row2flip.append(idx)
@@ -84,17 +98,18 @@ class GameState:
 
     def step(self):
         allowed_moves = self.get_allowed_moves()
-        random_move = random.choice(list(allowed_moves.keys()))
-        print(i2ab(random_move))
-        self.logfile.write('my move: ' + i2ab(random_move) + '\n')
-        self.board[random_move] = self.color
-        to_be_flipped = allowed_moves[random_move]
-        for i in to_be_flipped:
+        tile_index, flip_row = random.choice(list(allowed_moves.items()))
+        print(i2ab(tile_index))
+
+        self.log('my move: ' + i2ab(tile_index))
+
+        self.board[tile_index] = self.color
+        for i in flip_row:
             self.board[i] = self.color
 
         other_color = Tile.white if self.color == Tile.black else Tile.black
         other_move = input()
-        self.logfile.write('his move: ' + other_move + '\n')
+        self.log('his move: ' + other_move)
 
         allowed_moves = self.get_allowed_moves(opposite=True)
         other_move_index = ab2i(other_move)
@@ -103,14 +118,14 @@ class GameState:
         for i in to_be_flipped:
             self.board[i] = other_color
 
-        self.boardlog.write(self.repr_board() + '\n\n')
+        self.log(self.repr_board())
 
     def run(self):
         try:
             while True:
                 self.step()
         except Exception as e:
-            self.logfile.write('\n' + repr(e))
+            self.log('-'*10 + 'ERROR' + '-'*10 + '\n' + traceback.format_exc())
 
     def repr_board(self):
         row_i = 0
@@ -133,6 +148,10 @@ class GameState:
 
 
 if __name__ == '__main__':
+    if len(sys.argv) > 1:
+        bot_label = sys.argv[1]
+    else:
+        bot_label = None
     blackhole = input()
     color = input()
-    GameState(color, blackhole).run()
+    GameState(color, blackhole, bot_label=bot_label).run()

@@ -18,6 +18,7 @@ let wsServer;
 /** Waitgroup counters for queueing connections */
 let connQueueIndex = 0;
 let connQueueHead = connQueueIndex;
+let botCounter = 1;
 
 export async function createChan(...args) {
   const chan = new MsgChan(...args);
@@ -38,11 +39,12 @@ class MsgChan {
     if (type === CHAN_TYPE.CMD) {
       console.info(`Launching command line bot: "${params.cmd}".`);
       assert.ok(params.cmd, 'Command must be present');
+      this.botLabel = botCounter++;
 
       const proc = cp.exec(params.cmd);
 
       proc.on('close', (code) => {
-        console.info(`Bot terminated with exit code ${code}.`);
+        console.info(`Bot${this.botLabel} terminated with exit code ${code}.`);
       });
 
       const rl = readline.createInterface({
