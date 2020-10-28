@@ -1,6 +1,6 @@
 import * as yargs from 'yargs';
-import { CHAN_TYPE, MSG_TYPE, COLOR, initGame, i2xy } from '../common';
-import { initServer, createChannels, processMessage } from './utils';
+import { initServer, createChannels } from './utils';
+import { GameState } from './game';
 
 async function main() {
   const args = yargs
@@ -20,36 +20,25 @@ async function main() {
       alias: 'd',
       type: 'number',
       desc: 'Delay in ms between bot moves (WIP)',
+      implies: 'bot',
+      default: 0,
     })
     .strict()
     .help()
     .argv;
+  console.log(args);
 
   const fastifyApp = await initServer(args);
   if (args.singleplayer) {
     return;
   }
 
-  const gameState = initGame(args);
-  const [chan1, chan2] = await createChannels(args, fastifyApp.server);
+  // const gameState = initGame(args);
+  const channels = await createChannels(args, fastifyApp.server);
   console.info('Channels connected.');
 
-  // Game process
-  const blackHoleCoord = i2xy(gameState.blackHole);
-  chan1.send({ type: MSG_TYPE.COORD, payload: blackHoleCoord });
-  chan2.send({ type: MSG_TYPE.COORD, payload: blackHoleCoord });
-  chan1.send({ type: MSG_TYPE.COLOR, payload: COLOR.black });
-  chan2.send({ type: MSG_TYPE.COLOR, payload: COLOR.white });
-
-  while (true) {
-    const blMsg = await chan1.recv();
-    processMessage(blMsg, gameState);
-    chan2.send(blMsg);
-
-    const whMsg = await chan2.recv();
-    processMessage(whMsg, gameState);
-    chan1.send(whMsg);
-  }
+  const gameState = new GameState(args, channels);
+  await gameState.run();
 }
 
 main().catch((error) => {

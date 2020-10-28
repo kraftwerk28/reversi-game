@@ -10,20 +10,20 @@ export const isValidColor = (color) => color in COLOR;
 
 // Coordinate conversion
 export const i2xy = (i) => [i % 8, (i / 8) | 0];
-export const xy2i = (x, y) => y * 8 + x;
-export const xy2ab = (x, y) => ALPHABET[x] + (y + 1).toString();
-export const i2ab = (i) => xy2ab(i % 8, (i / 8) | 0);
+export const xy2i = ([x, y]) => y * 8 + x;
+export const xy2ab = ([x, y]) => ALPHABET[x] + (y + 1).toString();
+export const i2ab = (i) => xy2ab([i % 8, (i / 8) | 0]);
 export const ab2xy = (ab) => [
   ALPHABET.indexOf(ab[0].toUpperCase()),
   parseInt(ab[1]) - 1,
 ];
-export const ab2i = (ab) => xy2i(
+export const ab2i = (ab) => xy2i([
   ALPHABET.indexOf(ab[0].toUpperCase()),
   parseInt(ab[1]),
-);
+]);
 
 // Possible moves check algorithm
-const directions = [
+export const directions = [
   [1, 0], [1, 1], [0, 1], [-1, 1],
   [-1, 0], [-1, -1], [0, -1], [1, -1],
 ];
@@ -45,7 +45,7 @@ export function getPossibleMoves(gameState) {
           _x >= 0 && _x < 8 && _y >= 0 && y < 8;
           _x += dx, _y += dy
         ) {
-          const idx = xy2i(_x, _y);
+          const idx = xy2i([_x, _y]);
           const c = board[idx];
           if (c === otherColor) {
             rowToFlip.push(idx);
@@ -67,19 +67,10 @@ export function getPossibleMoves(gameState) {
 }
 
 export function initGame() {
-  const board = Array(64).fill(STATE.NONE);
-  board[xy2i(3, 3)] = board[xy2i(4, 4)] = STATE.WHITE;
-  board[xy2i(4, 3)] = board[xy2i(3, 4)] = STATE.BLACK;
   const state = {
-    move: STATE.BLACK,
-    board,
-    pass: false,
     playerColor: undefined,
     isLoading: true,
-    singleplayer: false,
-    blackHole: getBlackHoleIndex(),
   };
-  state.possibleMoves = getPossibleMoves(state);
   return state;
 }
 
@@ -109,4 +100,8 @@ export function choseWinner(board) {
 export function getBlackHoleIndex() {
   const range = Math.floor(Math.random() * 27);
   return Math.random() < 0.5 ? range : range + 37;
+}
+
+export function sleep(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
 }

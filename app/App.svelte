@@ -3,12 +3,8 @@
 
   import Field from './Field.svelte';
   import { connect } from './ws';
-  import {
-    processMessage,
-    setMyColor,
-    updateState,
-    setBlackHole,
-  } from './controllers';
+  import { gameState } from './state';
+  import { MSG_TYPE } from '../common';
 
   onMount(async () => {
     try {
@@ -17,17 +13,20 @@
 
       const { payload: blackHole } = await ws.recv();
       const { payload: playerColor } = await ws.recv();
-
-      setMyColor(playerColor);
-      setBlackHole(blackHole);
+      gameState.syncState({ playerColor, blackHole });
+      const { payload: firstSync } = await ws.recv();
+      gameState.syncState({ ...firstSync, isLoading: false });
 
       while (true) {
         const message = await ws.recv();
-        processMessage(message);
+        if (message.type === MSG_TYPE.SYNC) {
+          gameState.syncState(message.payload);
+        }
       }
     } catch (err) {
-      updateState({ isLoading: false, singleplayer: true });
-      console.info('Using singleplayer mode.');
+      console.error(err);
+      updateState({ isLoading: true });
+      console.info('Failed to initialize game.');
     }
   });
 </script>
@@ -39,5 +38,8 @@
   }
 </style>
 
+<svelte:window title="Antireversi" />
 <svelte:options immutable={true} />
-<Field />
+{#if !$gameState.isLoading}
+  <Field />
+{/if}

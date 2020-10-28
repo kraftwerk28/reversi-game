@@ -2,8 +2,8 @@
   import Disc from './Disc.svelte';
   import GameResults from './GameResults.svelte';
   import Marker, { onMouseMove, onMouseLeave } from './Marker.svelte';
-  import { STATE, ALPHABET, xy2i } from '../common';
-  import { gameState } from './game';
+  import { STATE, ALPHABET } from '../common';
+  import { gameState } from './state';
   import { sendMove } from './controllers';
 
   let fieldNode;
@@ -19,19 +19,7 @@
     $gameState.move
   );
 
-  let interactionDisabled = true;
-  $: {
-    if ($gameState.isLoading) {
-      interactionDisabled = true;
-    } else if (
-      typeof $gameState.playerColor === 'number' &&
-      $gameState.playerColor !== $gameState.move
-    ) {
-      interactionDisabled = true;
-    } else {
-      interactionDisabled = false;
-    }
-  }
+  $: interactionDisabled = $gameState.playerColor !== $gameState.move;
 </script>
 
 <style>

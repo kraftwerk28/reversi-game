@@ -1,6 +1,6 @@
 import assert from 'assert';
 import cp from 'child_process';
-import readline from 'readline';
+import * as readline from 'readline';
 import { Server as WsServer } from 'ws';
 
 import {
@@ -29,9 +29,10 @@ class MsgChan {
   constructor(type, params) {
     this.type = type;
     this._connected = false;
-    this._subscribers = new Set();
     this._waitConnectedResolves = new Set();
-    this._awaitMessageQueue = [];
+
+    this._awaitMessageResolves = [];
+    this._messageQueue = [];
 
     const processMessage = this._acceptMessage.bind(this);
     if (type === CHAN_TYPE.CMD) {
@@ -54,6 +55,7 @@ class MsgChan {
 
       this._connected = true;
       this.proc = proc;
+      this.rl = rl;
 
     } else if (type === CHAN_TYPE.WS) {
       console.info(`Opening websocket.`);
@@ -86,18 +88,16 @@ class MsgChan {
     const parsed = this._decode(raw);
     console.info(`Message > type: ${parsed.type}; payload: ${parsed.payload}.`);
 
-    if (this._awaitMessageQueue.length) {
-      const resolve = this._awaitMessageQueue.shift();
-      resolve(parsed);
-    } else {
-      this._subscribers.forEach((callback) => {
-        callback(parsed);
-      });
-    }
+    this._messageQueue.push(parsed);
+    this._flushMQ();
   }
 
-  onmessage(callback) {
-    this._subscribers.add(callback);
+  _flushMQ() {
+    while (this._awaitMessageResolves.length && this._messageQueue.length) {
+      const resolve = this._awaitMessageResolves.shift();
+      const message = this._messageQueue.shift();
+      resolve(message);
+    }
   }
 
   /**
@@ -105,7 +105,8 @@ class MsgChan {
    */
   recv() {
     return new Promise((resolve) => {
-      this._awaitMessageQueue.push(resolve);
+      this._awaitMessageResolves.push(resolve);
+      this._flushMQ();
     });
   }
 
@@ -160,8 +161,7 @@ class MsgChan {
     } else if (this.type === CHAN_TYPE.CMD) {
       switch (type) {
         case MSG_TYPE.COORD:
-          const [x, y] = payload;
-          return xy2ab(x, y);
+          return xy2ab(payload);
         case MSG_TYPE.COLOR:
           return payload === COLOR.black ? 'black' : 'white';
         default:

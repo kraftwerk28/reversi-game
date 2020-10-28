@@ -12,8 +12,7 @@ import copy from 'rollup-plugin-copy';
 
 const dev = process.env.NODE_ENV === 'development';
 const outputPath = path.resolve(__dirname, 'build/');
-// const serverArgs = ['-b', './sample_bot.py'];
-const serverArgs = [];
+const serverArgs = ['-b', './sample_bot.py', '-d', '1000'];
 
 function runServer() {
   let proc;

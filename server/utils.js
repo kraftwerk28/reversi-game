@@ -8,7 +8,7 @@ import { CHAN_TYPE, MSG_TYPE, COLOR, initGame, xy2i } from '../common';
 export function processMessage({ type, payload }, gameState) {
   switch (type) {
     case MSG_TYPE.COORD:
-      gameState.board[xy2i(payload[0], payload[1])];
+      gameState.board[xy2i(payload)];
       return;
     default:
       console.error(`Unknown message type: ${type}; with payload ${payload}`);

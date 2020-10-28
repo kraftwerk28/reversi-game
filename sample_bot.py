@@ -109,7 +109,6 @@ class GameState:
         try:
             while True:
                 self.step()
-                time.sleep(1)
         except Exception as e:
             self.logfile.write('\n' + repr(e))
 
@@ -119,13 +118,13 @@ class GameState:
         for i in range(64):
             t = self.board[i]
             if t == Tile.none:
-                ans[-1].append('-')
+                ans[-1].append('░░')
             elif t == Tile.black:
-                ans[-1].append('B')
+                ans[-1].append('██')
             elif t == Tile.white:
-                ans[-1].append('W')
+                ans[-1].append('▒▒')
             else:
-                ans[-1].append('X')
+                ans[-1].append('▞▞')
             row_i += 1
             if row_i == 8:
                 ans.append([])
@@ -134,7 +133,6 @@ class GameState:
 
 
 if __name__ == '__main__':
-    time.sleep(1)
     blackhole = input()
     color = input()
     GameState(color, blackhole).run()

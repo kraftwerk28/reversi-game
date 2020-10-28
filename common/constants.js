@@ -18,5 +18,7 @@ export const MSG_TYPE = {
   AUTH_TOK: 5, // Auth token for reconnection
 };
 
+export const LOGLEVEL = { I: 0, W: 1, E: 2 };
+
 export const CHAN_TYPE = { CMD: 0, WS: 1 };
 

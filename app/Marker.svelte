@@ -1,6 +1,6 @@
 <script context="module">
   import { writable } from 'svelte/store';
-  const markerState = writable({ visible: false });
+  const markerState = writable({ visible: false, pos: [] });
 
   export function onMouseMove(evt, fieldBounds) {
     const { left, top, width, height } = fieldBounds;
@@ -10,10 +10,11 @@
       (((clientY - top) / height) * 8) | 0,
     ];
     markerState.update((s) => {
-      if (x === s.x && y === s.y && s.visible) {
+      const [prevX, prevY] = s.pos;
+      if (x === prevX && y === prevY && s.visible) {
         return s;
       }
-      return { ...s, x, y, visible: true };
+      return { ...s, pos: [x, y], visible: true };
     });
   }
 
@@ -24,16 +25,16 @@
 
 <script>
   import { xy2i } from '../common/utils';
-  import { gameState } from './game';
+  import { gameState } from './state';
 
   export let fieldBounds;
 
   let markerStyle = '';
-  $: allow = $gameState.possibleMoves.has(xy2i($markerState.x, $markerState.y));
+  $: allow = xy2i($markerState.pos) in $gameState.allowedMoves;
 
   $: {
     if (fieldBounds) {
-      const { x, y } = $markerState;
+      const [x, y] = $markerState.pos;
       markerStyle = `
         left: ${(x / 8) * (fieldBounds.width - 14) + x * 2}px;
         top: ${(y / 8) * (fieldBounds.height - 14) + y * 2}px;

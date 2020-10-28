@@ -1,6 +1,6 @@
 <script>
   import { STATE } from '../common';
-  import { gameState } from './game';
+  import { gameState } from './state';
   import { restartGame } from './controllers';
 
   $: isGameEnded = [STATE.TIE, STATE.BLACK_WON, STATE.WHITE_WON].includes(
