@@ -26,7 +26,6 @@ async function main() {
     .strict()
     .help()
     .argv;
-  console.log(args);
 
   const fastifyApp = await initServer(args);
   if (args.singleplayer) {

@@ -159,7 +159,6 @@ export class GameState {
       await this.step();
       if (this.botDelay) {
         await sleep(this.botDelay);
-        console.info('Delay elapsed');
       }
     }
   }
