@@ -38,7 +38,11 @@
   }
 </style>
 
-<svelte:window title="Antireversi" />
+<svelte:head>
+  <title>
+    Antireversi
+  </title>
+</svelte:head>
 <svelte:options immutable={true} />
 {#if !$gameState.isLoading}
   <Field />

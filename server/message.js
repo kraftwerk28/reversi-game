@@ -2,6 +2,7 @@ import assert from 'assert';
 import cp from 'child_process';
 import * as readline from 'readline';
 import { Server as WsServer } from 'ws';
+import log from './logger';
 
 import {
   xy2ab, isValidAB, isValidColor, ab2xy,
@@ -37,14 +38,17 @@ class MsgChan {
 
     const processMessage = this._acceptMessage.bind(this);
     if (type === CHAN_TYPE.CMD) {
-      console.info(`Launching command line bot: "${params.cmd}".`);
+      log.i(`Launching bot: "${params.cmd}".`);
       assert.ok(params.cmd, 'Command must be present');
       this.botLabel = botCounter++;
 
       const proc = cp.exec(params.cmd);
 
+      proc.stderr.on('data', (chunk) => {
+        log.i(`Bot${this.botLabel} [stderr]: ${chunk}`);
+      });
       proc.on('close', (code) => {
-        console.info(`Bot${this.botLabel} terminated with exit code ${code}.`);
+        log.i(`Bot${this.botLabel} terminated with exit code ${code}.`);
       });
 
       const rl = readline.createInterface({
@@ -60,7 +64,7 @@ class MsgChan {
       this.rl = rl;
 
     } else if (type === CHAN_TYPE.WS) {
-      console.info(`Opening websocket.`);
+      log.i(`Opening websocket.`);
       if (!wsServer) {
         assert.ok(params.server, 'Server must be specified');
         wsServer = new WsServer({ server: params.server });
@@ -85,10 +89,9 @@ class MsgChan {
 
   _acceptMessage(raw) {
     if (this.type === CHAN_TYPE.CMD) {
-      console.info(`bot > ${raw}`);
+      log.i(`Bot${this.botLabel} [stdout] > ${raw}`);
     }
     const parsed = this._decode(raw);
-    console.info(`Message > type: ${parsed.type}; payload: ${parsed.payload}.`);
 
     this._messageQueue.push(parsed);
     this._flushMQ();
@@ -141,7 +144,7 @@ class MsgChan {
         }
         throw new Error;
       } catch (err) {
-        console.error('Failed to parse message:', err);
+        log.e('Failed to parse message:', err);
         return { type: MSG_TYPE.ERR };
       }
     } else if (this.type === CHAN_TYPE.CMD) {

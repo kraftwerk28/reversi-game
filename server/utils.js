@@ -1,9 +1,10 @@
 import fastify from 'fastify';
 import fastifyStatic from 'fastify-static';
 import path from 'path';
+import log from './logger';
 
 import { createChan } from './message';
-import { CHAN_TYPE, MSG_TYPE, COLOR, initGame, xy2i } from '../common';
+import { CHAN_TYPE, MSG_TYPE, xy2i } from '../common';
 
 export function processMessage({ type, payload }, gameState) {
   switch (type) {
@@ -11,7 +12,7 @@ export function processMessage({ type, payload }, gameState) {
       gameState.board[xy2i(payload)];
       return;
     default:
-      console.error(`Unknown message type: ${type}; with payload ${payload}`);
+      log.e(`Unknown message type: ${type}; with payload ${payload}`);
       return;
   }
 }
@@ -32,7 +33,7 @@ export function initServer(_args) {
   app.register(fastifyStatic, { root: path.resolve(__dirname, 'public/') });
   const port = process.env.PORT || 8080;
   app.listen(port, () => {
-    console.info(`Browser link: http://127.0.0.1:${port}.`);
+    log.i(`Browser link: http://127.0.0.1:${port}.`);
   });
   return app;
 }

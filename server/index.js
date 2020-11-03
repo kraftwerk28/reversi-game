@@ -1,6 +1,7 @@
 import * as yargs from 'yargs';
 import { initServer, createChannels } from './utils';
 import { GameState } from './game';
+import log from './logger';
 
 async function main() {
   const args = yargs
@@ -34,12 +35,14 @@ async function main() {
 
   // const gameState = initGame(args);
   const channels = await createChannels(args, fastifyApp.server);
-  console.info('Channels connected.');
+  log.i('Channels connected.');
 
   const gameState = new GameState(args, channels);
   await gameState.run();
+  gameState.report();
+  await fastifyApp.close();
 }
 
 main().catch((error) => {
-  console.error(error);
+  log.e(error);
 });

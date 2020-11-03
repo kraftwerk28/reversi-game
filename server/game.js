@@ -3,6 +3,7 @@ import {
   xy2i, i2xy, getBlackHoleIndex,
   directions, sleep,
 } from '../common';
+import log from './logger';
 
 export class GameState {
   constructor(args, channels) {
@@ -17,7 +18,6 @@ export class GameState {
     this.move = STATE.BLACK;
     this.pass = false;
     this.blackHole = getBlackHoleIndex();
-    this.allowedMoves = this.getPossibleMoves();
   }
 
   getPossibleMoves() {
@@ -64,9 +64,6 @@ export class GameState {
     for (const i of rowToFlip) {
       this.board[i] = this.move;
     }
-    this.move = this.oppositeColor();
-    this.allowedMoves = this.getPossibleMoves();
-    this.checkWinner();
   }
 
   checkWinner() {
@@ -115,7 +112,6 @@ export class GameState {
     if (type === MSG_TYPE.COORD) {
       const tileIndex = xy2i(payload);
       this.placeDisc(tileIndex);
-      this.sync();
     }
   }
 
@@ -134,25 +130,53 @@ export class GameState {
   }
 
   async step() {
-    const [chan1, chan2] = this.channels;
+    const opposColor = this.oppositeColor();
+    if (!Object.keys(this.allowedMoves).length) {
+      if (this.pass) {
+        this.checkWinner();
+        return;
+      }
+      this.move = opposColor;
+      this.pass = true;
+      this.allowedMoves = this.getPossibleMoves();
+      this.sync();
+      this.step();
+      return;
+    }
 
-    const blMsg = await chan1.recv();
-    this.processMessage(blMsg);
-    chan2.send(blMsg);
+    const [curChan, otherChan] = [
+      this.boundChans[this.move],
+      this.boundChans[opposColor],
+    ];
 
-    const whMsg = await chan2.recv();
-    this.processMessage(whMsg);
-    chan1.send(whMsg);
+    const msg = await curChan.recv();
+    // Only suitable for CMD bots
+    otherChan.send(msg);
+
+    this.processMessage(msg);
+    this.checkWinner();
+    this.move = opposColor;
+    this.allowedMoves = this.getPossibleMoves();
+    this.sync();
   }
 
   async run() {
-    // const [c1, c2] = this.randomColors();
-    const [chan1, chan2] = this.channels;
     for (const chan of this.channels) {
       chan.send({ type: MSG_TYPE.COORD, payload: i2xy(this.blackHole) });
     }
-    chan1.send({ type: MSG_TYPE.COLOR, payload: STATE.BLACK });
-    chan2.send({ type: MSG_TYPE.COLOR, payload: STATE.WHITE });
+
+    const [chan1, chan2] = this.channels;
+    if (Math.random() < 0.5) {
+      this.boundChans = { [STATE.BLACK]: chan1, [STATE.WHITE]: chan2 };
+      chan1.send({ type: MSG_TYPE.COLOR, payload: STATE.BLACK });
+      chan2.send({ type: MSG_TYPE.COLOR, payload: STATE.WHITE });
+    } else {
+      this.boundChans = { [STATE.BLACK]: chan2, [STATE.WHITE]: chan1 };
+      chan1.send({ type: MSG_TYPE.COLOR, payload: STATE.WHITE });
+      chan2.send({ type: MSG_TYPE.COLOR, payload: STATE.BLACK });
+    }
+
+    this.allowedMoves = this.getPossibleMoves();
     this.sync();
 
     while ([STATE.BLACK, STATE.WHITE].includes(this.move)) {
@@ -163,13 +187,21 @@ export class GameState {
     }
   }
 
-  log(data, level = LOGLEVEL.I) {
-    if (level === LOGLEVEL.I) {
-      console.info('INFO > ' + data.toString());
-    } else if (level === LOGLEVEL.E) {
-      console.error('ERROR > ' + data.toString());
-    } else if (level === LOGLEVEL.W) {
-      console.warn('WARN > ' + data.toString());
+  report() {
+    let nBlack = 0;
+    let nWhite = 0;
+    for (const tile of this.board) {
+      if (tile === STATE.BLACK) {
+        nBlack++;
+      } else if (tile === STATE.WHITE) {
+        nWhite++;
+      }
+    }
+    log.i(`white: ${nWhite} | black: ${nBlack}`);
+    if (nWhite > nBlack) {
+      log.i('Black won');
+    } else {
+      log.i('White won');
     }
   }
 }
